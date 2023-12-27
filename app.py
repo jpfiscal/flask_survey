@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template, redirect, flash
+from flask import Flask, request, render_template, redirect, flash, session
 from flask_debugtoolbar import DebugToolbarExtension
 from surveys import satisfaction_survey
 
@@ -13,11 +13,14 @@ question_index = 0
 
 @app.route('/')
 def go_home():
-    global question_index
-    global responses
-    # question_index = 0 #reset the question index
-    # responses = [] #reset responses list
     return render_template("home.html", title = satisfaction_survey.title, instructions = satisfaction_survey.instructions)
+
+@app.route('/start_survey', methods=["POST"])
+def start_survey():
+    global question_index
+    question_index = 0
+    session['responses'] = []
+    return redirect('questions/0')
 
 @app.route('/questions/<question_idx>')
 def question(question_idx):
@@ -40,11 +43,11 @@ def show_complete():
 @app.route('/answer', methods=["POST"])
 def append_answer():
     global question_index
-    answer =  request.form["select_option"]
-    print(f"answer:{answer}")
+    answer = request.form["select_option"]
+    responses = session['responses']
     responses.append(answer)
+    session['responses'] = responses
+    print(f"Responses: {session['responses']}")
     question_index += 1
-    print(f"responses: {responses}")
-    print(f"question index: {question_index}")
     return redirect(f'/questions/{int(question_index)}')
     
